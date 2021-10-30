@@ -245,6 +245,37 @@ app.get("/api/package/delete/:id", async (req, res) => {
   res.json(allPackages);
 });
 
+app.post("/api/signup/admin", async (req, res) => {
+  const docRef = db.collection("users").doc();
+  const data = req.body.data;
+  // console.log(data);
+  // const submitBy = req.body.submitBy;
+  /* console.log(data);
+  console.log(req.body.submitBy); */
+
+  await docRef.set({
+    userId: uuidv4(),
+    ...data,
+  });
+  res.send("Request has sent");
+});
+
+app.get("/api/signup/admin/check/:email", async (req, res) => {
+  const Packages = [];
+  const Ref = db.collection("users");
+  const snapshot = await Ref.where("email", "==", req.params.email).get();
+  if (snapshot.empty) {
+    console.log("No matching documents.");
+    return;
+  }
+  snapshot.forEach((doc) => {
+    const id = doc.id;
+    Packages.push({ id, ...doc.data() });
+  });
+
+  res.json(Packages[0]);
+});
+
 app.get("/", async (req, res) => {
   res.send("server is listening");
 });
