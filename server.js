@@ -76,6 +76,22 @@ app.get("/api/allpackages", async (req, res) => {
   res.json(allPackages);
 });
 
+//mybooking query
+app.get("/api/mybooking/:id", async (req, res) => {
+  const mybooking = [];
+  const Ref = db.collection("all_bookings");
+  const snapshot = await Ref.where("bookedUser", "==", req.params.id).get();
+  if (snapshot.empty) {
+    console.log("No matching documents.");
+    return;
+  }
+  snapshot.forEach((doc) => {
+    mybooking.push({ ...doc.data() });
+  });
+
+  res.json(mybooking);
+});
+
 app.get("/api/package/:id", async (req, res) => {
   const Packages = [];
   const Ref = db.collection("Tour_Packages");
@@ -102,14 +118,106 @@ app.get("/api/allbookings", async (req, res) => {
 
   res.json(allbookings);
 });
+
 app.put("/api/booking/status/:id", async (req, res) => {
   console.log(req.params.id);
-  console.log(req.body.status);
+  const Packages = [];
+  const Ref = db.collection("all_bookings");
+  const snapshot = await Ref.where("bookingId", "==", req.params.id).get();
+  if (snapshot.empty) {
+    console.log("No matching documents.");
+    return;
+  }
+  snapshot.forEach((doc) => {
+    const id = doc.id;
+    Packages.push({ id, ...doc.data() });
+  });
 
-  const Ref = db.collection("all_bookings").doc(req.params.id);
-  const result = await Ref.update({ status: req.body.status });
+  const del_id = Packages[0].id;
+  console.log(del_id);
 
-  res.send(result);
+  const upRef = db.collection("all_bookings").doc(del_id);
+
+  const result = await upRef.update({ status: req.body.status });
+
+  res.json(Packages[0]);
+});
+
+//package update
+app.put("/api/package/update/:id", async (req, res) => {
+  // console.log(req.params.id);
+  console.log(req.body.data);
+  const {
+    doc_id,
+    not_included,
+    price,
+    departure,
+    img_url,
+    return_time,
+    rating,
+    title,
+    submitBy,
+    tour_duration,
+    accommodation,
+    description,
+    destination,
+    departure_time,
+  } = req.body.data;
+  // const Packages = [];
+  /* const Ref = db.collection("Tour_Packages");
+  const snapshot = await Ref.where("id", "==", req.params.id).get();
+  if (snapshot.empty) {
+    console.log("No matching documents.");
+    return;
+  }
+  snapshot.forEach((doc) => {
+    const id = doc.id;
+    Packages.push({ id, ...doc.data() });
+  });
+
+  const up_id = Packages[0].id;
+  console.log(up_id);
+
+  const upRef = db.collection("Tour_Packages").doc(up_id);
+
+  const data = req.body.data;
+
+  const result = await upRef.update({
+    doc_id,
+    not_included,
+    price,
+    departure,
+    img_url,
+    return_time,
+    rating,
+    title,
+    submitBy,
+    tour_duration,
+    accommodation,
+    description,
+    destination,
+    departure_time,
+  }); */
+
+  const cityRef = db.collection("Tour_Packages").doc(req.body.data.doc_id);
+  const result = await cityRef.update({
+    doc_id,
+    not_included,
+    price,
+    departure,
+    img_url,
+    return_time,
+    rating,
+    title,
+    submitBy,
+    tour_duration,
+    accommodation,
+    description,
+    destination,
+    departure_time,
+  });
+
+  res.json("updatead");
 });
 
 app.put("/api/booking/delete/:id", async (req, res) => {
@@ -119,6 +227,26 @@ app.put("/api/booking/delete/:id", async (req, res) => {
   const Ref = db.collection("all_bookings").doc(req.params.id).delete();
 
   res.send(Ref);
+});
+
+app.get("/api/package/delete/:id", async (req, res) => {
+  console.log(req.params.id);
+
+  const allPackages = [];
+  const Ref = db.collection("Tour_Packages").doc(req.params.id).delete();
+
+  const citiesRef = db.collection("Tour_Packages");
+  const snapshot = await citiesRef.get();
+  snapshot.forEach((doc) => {
+    const doc_id = doc.id;
+    allPackages.push({ doc_id, ...doc.data() });
+  });
+  console.log(allPackages);
+  res.json(allPackages);
+});
+
+app.get("/", async (req, res) => {
+  res.send("server is listening");
 });
 
 app.listen(port, () => {
