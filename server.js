@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 var admin = require("firebase-admin");
+const { v4: uuidv4 } = require("uuid");
 const {
   initializeApp,
   applicationDefault,
@@ -18,6 +19,8 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
+// console.log(uuidv4());
+
 const db = getFirestore();
 
 // console.log(db);
@@ -29,27 +32,93 @@ app.use(cors());
 
 app.use(express.json());
 
-app.post("/api/add/", async (req, res) => {
-  const docRef = db.collection("users").doc("heroku");
+app.post("/api/addTourPackage/", async (req, res) => {
+  const docRef = db.collection("Tour_Packages").doc();
+  const data = req.body.data;
+  const submitBy = req.body.submitBy;
+  /* console.log(data);
+  console.log(req.body.submitBy); */
 
   await docRef.set({
-    first: "Ada",
-    last: "Lovelace",
-    born: 1815,
+    id: uuidv4(),
+    submitBy,
+    ...data,
   });
 
   res.send("data added successfully");
 });
 
-app.get("/", async (req, res) => {
-  const docRef = db.collection("users").doc("tes5");
+app.post("/api/booking/", async (req, res) => {
+  const docRef = db.collection("all_bookings").doc();
+  const data = req.body.bookingData;
+  console.log(data);
+  // const submitBy = req.body.submitBy;
+  /* console.log(data);
+  console.log(req.body.submitBy); */
 
   await docRef.set({
-    first: "Ada",
-    last: "Lovelace",
-    born: 1815,
+    bookingId: uuidv4(),
+    ...data,
   });
-  res.send("Server is listening");
+
+  res.send("data added successfully");
+});
+
+app.get("/api/allpackages", async (req, res) => {
+  const allPackages = [];
+  const citiesRef = db.collection("Tour_Packages");
+  const snapshot = await citiesRef.get();
+  snapshot.forEach((doc) => {
+    const doc_id = doc.id;
+    allPackages.push({ doc_id, ...doc.data() });
+  });
+
+  res.json(allPackages);
+});
+
+app.get("/api/package/:id", async (req, res) => {
+  const Packages = [];
+  const Ref = db.collection("Tour_Packages");
+  const snapshot = await Ref.where("id", "==", req.params.id).get();
+  if (snapshot.empty) {
+    console.log("No matching documents.");
+    return;
+  }
+  snapshot.forEach((doc) => {
+    Packages.push({ ...doc.data() });
+  });
+
+  res.json(Packages);
+});
+
+app.get("/api/allbookings", async (req, res) => {
+  const allbookings = [];
+  const citiesRef = db.collection("all_bookings");
+  const snapshot = await citiesRef.get();
+  snapshot.forEach((doc) => {
+    const doc_id = doc.id;
+    allbookings.push({ doc_id, ...doc.data() });
+  });
+
+  res.json(allbookings);
+});
+app.put("/api/booking/status/:id", async (req, res) => {
+  console.log(req.params.id);
+  console.log(req.body.status);
+
+  const Ref = db.collection("all_bookings").doc(req.params.id);
+  const result = await Ref.update({ status: req.body.status });
+
+  res.send(result);
+});
+
+app.put("/api/booking/delete/:id", async (req, res) => {
+  console.log(req.params.id);
+  console.log(req.body.status);
+
+  const Ref = db.collection("all_bookings").doc(req.params.id).delete();
+
+  res.send(Ref);
 });
 
 app.listen(port, () => {
