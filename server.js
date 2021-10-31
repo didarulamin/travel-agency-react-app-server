@@ -1,6 +1,15 @@
 const express = require("express");
 const cors = require("cors");
 var admin = require("firebase-admin");
+const app = express();
+
+app.use(cors());
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  next();
+});
+app.use(express.json());
+
 const { v4: uuidv4 } = require("uuid");
 const {
   initializeApp,
@@ -13,7 +22,6 @@ const {
   FieldValue,
 } = require("firebase-admin/firestore");
 var serviceAccount = require("./tourism-or-delivery-webs-71b76-firebase-adminsdk-tnhuu-0d05c2a67b.json");
-const app = express();
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -27,10 +35,6 @@ const db = getFirestore();
 
 const port = process.env.PORT || 5000;
 const dbUrl = process.env.DB_URL;
-
-app.use(cors());
-
-app.use(express.json());
 
 app.post("/api/addTourPackage/", async (req, res) => {
   const docRef = db.collection("Tour_Packages").doc();
